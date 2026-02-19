@@ -1026,6 +1026,31 @@ resource "aws_wafv2_web_acl" "default" {
   }
 
   dynamic "rule" {
+    for_each = local.enabled && var.bot_control_label_enforcement != null ? [var.bot_control_label_enforcement] : []
+
+    content {
+      name     = rule.value.name
+      priority = rule.value.priority
+
+      override_action {
+        none {}
+      }
+
+      statement {
+        rule_group_reference_statement {
+          arn = aws_wafv2_rule_group.bot_control_label_enforcement[0].arn
+        }
+      }
+
+      visibility_config {
+        cloudwatch_metrics_enabled = lookup(try(rule.value.visibility_config, {}), "cloudwatch_metrics_enabled", true)
+        metric_name                = lookup(try(rule.value.visibility_config, {}), "metric_name", rule.value.name)
+        sampled_requests_enabled   = lookup(try(rule.value.visibility_config, {}), "sampled_requests_enabled", true)
+      }
+    }
+  }
+
+  dynamic "rule" {
     for_each = local.rate_based_statement_rules
 
     content {
