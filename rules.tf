@@ -1043,9 +1043,9 @@ resource "aws_wafv2_web_acl" "default" {
       }
 
       visibility_config {
-        cloudwatch_metrics_enabled = lookup(try(rule.value.visibility_config, {}), "cloudwatch_metrics_enabled", true)
-        metric_name                = lookup(try(rule.value.visibility_config, {}), "metric_name", rule.value.name)
-        sampled_requests_enabled   = lookup(try(rule.value.visibility_config, {}), "sampled_requests_enabled", true)
+        cloudwatch_metrics_enabled = lookup(coalesce(try(rule.value.visibility_config, null), {}), "cloudwatch_metrics_enabled", true)
+        metric_name                = lookup(coalesce(try(rule.value.visibility_config, null), {}), "metric_name", rule.value.name)
+        sampled_requests_enabled   = lookup(coalesce(try(rule.value.visibility_config, null), {}), "sampled_requests_enabled", true)
       }
     }
   }
