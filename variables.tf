@@ -1211,6 +1211,32 @@ variable "nested_statement_rules" {
 
 }
 
+variable "bot_control_label_enforcement" {
+  type = object({
+    name     = string
+    priority = number
+    capacity = optional(number, 500)
+    visibility_config = optional(object({
+      cloudwatch_metrics_enabled = optional(bool)
+      metric_name                = string
+      sampled_requests_enabled   = optional(bool)
+    }), null)
+    base_blocked_labels = list(string)
+    domains = map(object({
+      additional_blocked_labels = optional(list(string), [])
+    }))
+  })
+  default     = null
+  description = <<-DOC
+    Optional label-based Bot Control enforcement.
+    Creates an internal `aws_wafv2_rule_group` with one blocking rule per (domain, label),
+    then wires it into the Web ACL via `rule_group_reference_statement`.
+
+    This is intended to keep Bot Control in COUNT mode globally while enforcing blocking
+    only for selected domains and selected Bot Control labels.
+  DOC
+}
+
 # Logging configuration
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_web_acl_logging_configuration.html
 variable "log_destination_configs" {
