@@ -19,9 +19,9 @@ resource "aws_wafv2_rule_group" "bot_control_label_enforcement" {
   tags        = module.this.tags
 
   visibility_config {
-    cloudwatch_metrics_enabled = lookup(try(var.bot_control_label_enforcement.visibility_config, {}), "cloudwatch_metrics_enabled", true)
-    metric_name                = lookup(try(var.bot_control_label_enforcement.visibility_config, {}), "metric_name", "${var.bot_control_label_enforcement.name}-group")
-    sampled_requests_enabled   = lookup(try(var.bot_control_label_enforcement.visibility_config, {}), "sampled_requests_enabled", true)
+    cloudwatch_metrics_enabled = lookup(coalesce(try(var.bot_control_label_enforcement.visibility_config, null), {}), "cloudwatch_metrics_enabled", true)
+    metric_name                = lookup(coalesce(try(var.bot_control_label_enforcement.visibility_config, null), {}), "metric_name", "${var.bot_control_label_enforcement.name}-group")
+    sampled_requests_enabled   = lookup(coalesce(try(var.bot_control_label_enforcement.visibility_config, null), {}), "sampled_requests_enabled", true)
   }
 
   dynamic "rule" {
