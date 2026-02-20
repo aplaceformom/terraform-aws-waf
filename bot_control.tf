@@ -1,12 +1,11 @@
 locals {
-  bot_control_label_enforcement_rules = var.bot_control_label_enforcement == null ? [] : flatten([
-    for domain, cfg in var.bot_control_label_enforcement.domains : [
-      for label in distinct(concat(var.bot_control_label_enforcement.base_blocked_labels, try(cfg.additional_blocked_labels, []))) : {
-        domain = lower(domain)
-        label  = label
-      }
-    ]
-  ])
+  bot_control_label_enforcement_rules = var.bot_control_label_enforcement == null ? [] : [
+    for domain, cfg in var.bot_control_label_enforcement.domains : {
+      domain      = lower(domain)
+      domain_slug = regexreplace(lower(domain), "[^a-z0-9-]", "-")
+      labels      = distinct(concat(var.bot_control_label_enforcement.base_blocked_labels, try(cfg.additional_blocked_labels, [])))
+    }
+  ]
 }
 
 resource "aws_wafv2_rule_group" "bot_control_label_enforcement" {
@@ -31,7 +30,7 @@ resource "aws_wafv2_rule_group" "bot_control_label_enforcement" {
     }
 
     content {
-      name     = format("botctrl-%03d-%s", rule.key, substr(md5("${rule.value.domain}-${rule.value.label}"), 0, 10))
+      name     = substr(format("botctrl-block-%03d-%s", rule.key, rule.value.domain_slug), 0, 128)
       priority = rule.key
 
       action {
@@ -40,12 +39,6 @@ resource "aws_wafv2_rule_group" "bot_control_label_enforcement" {
 
       statement {
         and_statement {
-          statement {
-            label_match_statement {
-              scope = "LABEL"
-              key   = rule.value.label
-            }
-          }
           statement {
             byte_match_statement {
               positional_constraint = "ENDS_WITH"
@@ -63,12 +56,25 @@ resource "aws_wafv2_rule_group" "bot_control_label_enforcement" {
               }
             }
           }
+          statement {
+            or_statement {
+              dynamic "statement" {
+                for_each = rule.value.labels
+                content {
+                  label_match_statement {
+                    scope = "LABEL"
+                    key   = statement.value
+                  }
+                }
+              }
+            }
+          }
         }
       }
 
       visibility_config {
         cloudwatch_metrics_enabled = true
-        metric_name                = format("%s-%03d", substr(var.bot_control_label_enforcement.name, 0, 110), rule.key)
+        metric_name                = substr(format("%s-block-%s", var.bot_control_label_enforcement.name, rule.value.domain_slug), 0, 128)
         sampled_requests_enabled   = true
       }
     }

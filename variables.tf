@@ -1229,7 +1229,8 @@ variable "bot_control_label_enforcement" {
   default     = null
   description = <<-DOC
     Optional label-based Bot Control enforcement.
-    Creates an internal `aws_wafv2_rule_group` with one blocking rule per (domain, label),
+    Creates an internal `aws_wafv2_rule_group` with one blocking rule per domain
+    and an `or_statement` over blocked labels in each domain rule,
     then wires it into the Web ACL via `rule_group_reference_statement`.
 
     This is intended to keep Bot Control in COUNT mode globally while enforcing blocking
