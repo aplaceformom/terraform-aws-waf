@@ -30,7 +30,7 @@ resource "aws_wafv2_rule_group" "bot_control_label_enforcement" {
     }
 
     content {
-      name     = substr(format("botctrl-block-%03d-%s", rule.key, rule.value.domain_slug), 0, 128)
+      name     = substr(format("apfm-block-%s", rule.value.domain_slug), 0, 128)
       priority = rule.key
 
       action {
@@ -74,7 +74,7 @@ resource "aws_wafv2_rule_group" "bot_control_label_enforcement" {
 
       visibility_config {
         cloudwatch_metrics_enabled = true
-        metric_name                = substr(format("%s-block-%s", var.bot_control_label_enforcement.name, rule.value.domain_slug), 0, 128)
+        metric_name                = substr(format("apfm-bot-control-block-%s", rule.value.domain_slug), 0, 128)
         sampled_requests_enabled   = true
       }
     }
