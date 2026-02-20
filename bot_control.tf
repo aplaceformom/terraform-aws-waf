@@ -2,7 +2,7 @@ locals {
   bot_control_label_enforcement_rules = var.bot_control_label_enforcement == null ? [] : [
     for domain, cfg in var.bot_control_label_enforcement.domains : {
       domain      = lower(domain)
-      domain_slug = regexreplace(lower(domain), "[^a-z0-9-]", "-")
+      domain_slug = replace(lower(domain), "/[^a-z0-9-]/", "-")
       labels      = distinct(concat(var.bot_control_label_enforcement.base_blocked_labels, try(cfg.additional_blocked_labels, [])))
     }
   ]
