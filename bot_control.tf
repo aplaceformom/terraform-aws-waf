@@ -30,8 +30,8 @@ resource "aws_wafv2_rule_group" "bot_control_label_enforcement" {
     }
 
     content {
-      name     = substr(format("apfm-allow-bot-%d", rule.key), 0, 128)
-      priority = rule.key
+      name     = substr(format("apfm-allow-bot-%d", tonumber(rule.key)), 0, 128)
+      priority = tonumber(rule.key)
 
       action {
         allow {}
@@ -60,7 +60,7 @@ resource "aws_wafv2_rule_group" "bot_control_label_enforcement" {
 
     content {
       name     = substr(format("apfm-block-%s", rule.value.domain_slug), 0, 128)
-      priority = rule.key + length(try(var.bot_control_label_enforcement.allowed_labels, []))
+      priority = tonumber(rule.key) + length(try(var.bot_control_label_enforcement.allowed_labels, []))
 
       action {
         block {}
