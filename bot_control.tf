@@ -25,13 +25,42 @@ resource "aws_wafv2_rule_group" "bot_control_label_enforcement" {
 
   dynamic "rule" {
     for_each = {
+      for idx, label in try(var.bot_control_label_enforcement.allowed_labels, []) :
+      idx => label
+    }
+
+    content {
+      name     = substr(format("apfm-allow-bot-%d", tonumber(rule.key)), 0, 128)
+      priority = tonumber(rule.key)
+
+      action {
+        allow {}
+      }
+
+      statement {
+        label_match_statement {
+          scope = "LABEL"
+          key   = rule.value
+        }
+      }
+
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = substr(format("apfm-bot-control-allow-%d", tonumber(rule.key)), 0, 128)
+        sampled_requests_enabled   = true
+      }
+    }
+  }
+
+  dynamic "rule" {
+    for_each = {
       for idx, item in local.bot_control_label_enforcement_rules :
       idx => item
     }
 
     content {
       name     = substr(format("apfm-block-%s", rule.value.domain_slug), 0, 128)
-      priority = rule.key
+      priority = tonumber(rule.key) + length(try(var.bot_control_label_enforcement.allowed_labels, []))
 
       action {
         block {}

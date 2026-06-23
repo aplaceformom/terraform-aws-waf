@@ -1222,6 +1222,7 @@ variable "bot_control_label_enforcement" {
       sampled_requests_enabled   = optional(bool)
     }), null)
     base_blocked_labels = list(string)
+    allowed_labels = optional(list(string), [])
     domains = map(object({
       additional_blocked_labels = optional(list(string), [])
     }))
@@ -1232,6 +1233,11 @@ variable "bot_control_label_enforcement" {
     Creates an internal `aws_wafv2_rule_group` with one blocking rule per domain
     and an `or_statement` over blocked labels in each domain rule,
     then wires it into the Web ACL via `rule_group_reference_statement`.
+
+    `allowed_labels` generates an explicit ALLOW rule per label at the top of the rule
+    group (lowest priority numbers), firing before any block rules. Use this to
+    allow specific verified bots (e.g. chatgpt_user) that would otherwise be caught
+    by domain-level block rules.
 
     This is intended to keep Bot Control in COUNT mode globally while enforcing blocking
     only for selected domains and selected Bot Control labels.
